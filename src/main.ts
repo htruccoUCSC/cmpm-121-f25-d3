@@ -29,6 +29,8 @@ const CLASSROOM_LATLNG = leaflet.latLng(
 // Tunable gameplay parameters
 const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 1e-4;
+const NEIGHBORHOOD_SIZE_X = 35;
+const NEIGHBORHOOD_SIZE_Y = 14;
 
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
@@ -55,10 +57,26 @@ playerMarker.bindTooltip("That's you!");
 playerMarker.addTo(map);
 
 const origin = CLASSROOM_LATLNG;
-const bounds = leaflet.latLngBounds([[origin.lat, origin.lng], [
-  origin.lat + 1 * TILE_DEGREES,
-  origin.lng + 1 * TILE_DEGREES,
-]]);
-// Add a rectangle to the map to represent the cache
-const rect = leaflet.rectangle(bounds);
-rect.addTo(map);
+
+// Draw a grid of tiles around the player's location using the neighborhood range.
+for (let i = -NEIGHBORHOOD_SIZE_Y; i <= NEIGHBORHOOD_SIZE_Y; i++) {
+  for (let j = -NEIGHBORHOOD_SIZE_X; j <= NEIGHBORHOOD_SIZE_X; j++) {
+    const bounds = leaflet.latLngBounds(
+      [
+        [origin.lat + i * TILE_DEGREES, origin.lng + j * TILE_DEGREES],
+        [
+          origin.lat + (i + 1) * TILE_DEGREES,
+          origin.lng + (j + 1) * TILE_DEGREES,
+        ],
+      ],
+    );
+
+    // lightly style each rectangle so the map remains readable
+    const rect = leaflet.rectangle(bounds, {
+      weight: 1,
+      color: "#3388ff",
+      fillOpacity: 0.04,
+    });
+    rect.addTo(map);
+  }
+}
