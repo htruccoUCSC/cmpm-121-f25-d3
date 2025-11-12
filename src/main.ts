@@ -21,6 +21,39 @@ const mapDiv = document.createElement("div");
 mapDiv.id = "map";
 document.body.append(mapDiv);
 
+// Movement controls (non-functional UI for now) — will live bottom-center
+const movementControls = document.createElement("div");
+movementControls.id = "movementControls";
+// Layout: up button, then left/right row, then down button
+const btnUp = document.createElement("button");
+btnUp.className = "move-btn";
+btnUp.setAttribute("data-dir", "north");
+btnUp.setAttribute("aria-label", "Move north");
+btnUp.textContent = "▲";
+
+const midRow = document.createElement("div");
+midRow.className = "movement-row";
+const btnLeft = document.createElement("button");
+btnLeft.className = "move-btn";
+btnLeft.setAttribute("data-dir", "west");
+btnLeft.setAttribute("aria-label", "Move west");
+btnLeft.textContent = "◀";
+const btnRight = document.createElement("button");
+btnRight.className = "move-btn";
+btnRight.setAttribute("data-dir", "east");
+btnRight.setAttribute("aria-label", "Move east");
+btnRight.textContent = "▶";
+midRow.append(btnLeft, btnRight);
+
+const btnDown = document.createElement("button");
+btnDown.className = "move-btn";
+btnDown.setAttribute("data-dir", "south");
+btnDown.setAttribute("aria-label", "Move south");
+btnDown.textContent = "▼";
+
+movementControls.append(btnUp, midRow, btnDown);
+document.body.append(movementControls);
+
 const statusPanelDiv = document.createElement("div");
 statusPanelDiv.id = "statusPanel";
 document.body.append(statusPanelDiv);
@@ -86,8 +119,7 @@ leaflet
   })
   .addTo(map);
 
-// Layer group that holds all currently visible cells/markers. We clear and
-// re-render this group when the camera moves.
+// Layer group that holds all currently visible cells/markers.
 const viewLayer = leaflet.layerGroup().addTo(map);
 
 // Add a marker to represent the player
@@ -149,9 +181,7 @@ function createCoinMarker(i: number, j: number, value: number) {
   return marker;
 }
 
-// Render all cells that intersect the current map view. This clears the
-// previous viewLayer and tokenMap so we don't track history (per current
-// iteration requirements).
+// Render all cells that intersect the current map view.
 function renderVisibleCells() {
   viewLayer.clearLayers();
   tokenMap.clear();
