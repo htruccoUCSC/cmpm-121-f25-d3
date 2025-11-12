@@ -95,12 +95,31 @@ playerMarker.addTo(map);
 
 const origin = CLASSROOM_LATLNG;
 
+// Helper: convert lat/lng to global cell coordinates aligned to Null Island (0,0).
+function latLngToCell(lat: number, lng: number) {
+  const i = Math.floor(lat / TILE_DEGREES);
+  const j = Math.floor(lng / TILE_DEGREES);
+  return { i, j };
+}
+
+// Helper: convert global cell indices to a Leaflet LatLngBounds
+function cellToBounds(i: number, j: number) {
+  const south = i * TILE_DEGREES;
+  const west = j * TILE_DEGREES;
+  const north = (i + 1) * TILE_DEGREES;
+  const east = (j + 1) * TILE_DEGREES;
+  return leaflet.latLngBounds([
+    [south, west],
+    [north, east],
+  ]);
+}
+
+// Player's current cell indices (center the generated neighborhood around this)
+const playerCell = latLngToCell(origin.lat, origin.lng);
+
 // helper: create and add the rectangle for cell
 function createRect(i: number, j: number) {
-  const bounds = leaflet.latLngBounds([
-    [origin.lat + i * TILE_DEGREES, origin.lng + j * TILE_DEGREES],
-    [origin.lat + (i + 1) * TILE_DEGREES, origin.lng + (j + 1) * TILE_DEGREES],
-  ]);
+  const bounds = cellToBounds(i, j);
   const rect = leaflet.rectangle(bounds, {
     weight: 1,
     color: "#3388ff",
@@ -112,8 +131,8 @@ function createRect(i: number, j: number) {
 
 // helper: create a coin marker centered in cell (i,j) with given value
 function createCoinMarker(i: number, j: number, value: number) {
-  const centerLat = origin.lat + (i + 0.5) * TILE_DEGREES;
-  const centerLng = origin.lng + (j + 0.5) * TILE_DEGREES;
+  const centerLat = (i + 0.5) * TILE_DEGREES;
+  const centerLng = (j + 0.5) * TILE_DEGREES;
   const coinIcon = leaflet.divIcon({
     className: "coin-marker",
     html: `<div class="coin">${value}</div>`,
@@ -143,8 +162,8 @@ function spawnTokenAtCell(i: number, j: number) {
   const key = `${i},${j}`;
   tokenMap.set(key, { marker: coinMarker, value: tokenValue });
   coinMarker.on("click", () => {
-    const withinRange = Math.abs(i) <= PICKUP_RADIUS &&
-      Math.abs(j) <= PICKUP_RADIUS;
+    const withinRange = Math.abs(i - playerCell.i) <= PICKUP_RADIUS &&
+      Math.abs(j - playerCell.j) <= PICKUP_RADIUS;
     if (!withinRange) {
       statusTextDiv.textContent =
         `Too far to pick up (need <= ${PICKUP_RADIUS} blocks)`;
@@ -181,15 +200,36 @@ function spawnTokenAtCell(i: number, j: number) {
 
 // helper: attach drop handler so clicking rect places a held token
 function attachDropHandler(i: number, j: number, rect: leaflet.Rectangle) {
-  rect.on("click", () => {
-    const withinRange = Math.abs(i) <= PICKUP_RADIUS &&
-      Math.abs(j) <= PICKUP_RADIUS;
+  rect.on("click", (ev: leaflet.LeafletMouseEvent) => {
+    // Print debugging facts about the clicked cell to the console
+    const key = `${i},${j}`;
+    const bounds = cellToBounds(i, j);
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    console.log("Cell click:", {
+      i,
+      j,
+      cellCenterLat: (i + 0.5) * TILE_DEGREES,
+      cellCenterLng: (j + 0.5) * TILE_DEGREES,
+      bounds: {
+        south: sw.lat,
+        west: sw.lng,
+        north: ne.lat,
+        east: ne.lng,
+      },
+      clickLatLng: ev && ev.latlng ? ev.latlng : null,
+      tokenAtCell: tokenMap.get(key) ? tokenMap.get(key)!.value : null,
+      playerCell,
+      playerHeldToken,
+    });
+
+    const withinRange = Math.abs(i - playerCell.i) <= PICKUP_RADIUS &&
+      Math.abs(j - playerCell.j) <= PICKUP_RADIUS;
     if (!withinRange) {
       statusTextDiv.textContent =
         `Too far to place (need <= ${PICKUP_RADIUS} blocks)`;
       return;
     }
-    const key = `${i},${j}`;
     const entry = tokenMap.get(key);
 
     // If tile has a token and player is holding one, attempt merge (must be equal)
@@ -278,8 +318,12 @@ function createCell(i: number, j: number) {
 }
 
 // Draw a grid of tiles around the player's location using the neighborhood range.
-for (let i = -NEIGHBORHOOD_SIZE_Y; i <= NEIGHBORHOOD_SIZE_Y; i++) {
-  for (let j = -NEIGHBORHOOD_SIZE_X; j <= NEIGHBORHOOD_SIZE_X; j++) {
+const startI = playerCell.i - NEIGHBORHOOD_SIZE_Y;
+const endI = playerCell.i + NEIGHBORHOOD_SIZE_Y;
+const startJ = playerCell.j - NEIGHBORHOOD_SIZE_X;
+const endJ = playerCell.j + NEIGHBORHOOD_SIZE_X;
+for (let i = startI; i <= endI; i++) {
+  for (let j = startJ; j <= endJ; j++) {
     createCell(i, j);
   }
 }
