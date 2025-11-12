@@ -24,12 +24,32 @@ document.body.append(mapDiv);
 const statusPanelDiv = document.createElement("div");
 statusPanelDiv.id = "statusPanel";
 document.body.append(statusPanelDiv);
+// status area: a stable status text and a separate container for transient messages
+const statusTextDiv = document.createElement("div");
+statusTextDiv.id = "statusText";
+statusTextDiv.textContent = "Holding: none";
+statusPanelDiv.append(statusTextDiv);
+
+const statusMessagesDiv = document.createElement("div");
+statusMessagesDiv.id = "statusMessages";
+statusPanelDiv.append(statusMessagesDiv);
 
 // What token the player is currently holding (null = empty-handed)
 let playerHeldToken: number | null = null;
-statusPanelDiv.innerHTML = `Holding: none`;
 // Track tokens on tiles by their i,j key -> { marker, value }
 const tokenMap = new Map<string, { marker: leaflet.Marker; value: number }>();
+
+// Show a temporary congratulations message when player reaches a target token value
+function congratulateIfReached(value: number) {
+  const TARGET = 8;
+  if (value !== TARGET) return;
+  const msg = document.createElement("div");
+  msg.textContent = `🎉 Congratulations — you made an ${TARGET} token!`;
+  msg.className = "congrats-message";
+  // place the message in the status panel so it's visible below the map
+  statusMessagesDiv.append(msg);
+  setTimeout(() => msg.remove(), 5000);
+}
 
 // Our classroom location
 const CLASSROOM_LATLNG = leaflet.latLng(
@@ -126,7 +146,7 @@ function spawnTokenAtCell(i: number, j: number) {
     const withinRange = Math.abs(i) <= PICKUP_RADIUS &&
       Math.abs(j) <= PICKUP_RADIUS;
     if (!withinRange) {
-      statusPanelDiv.innerHTML =
+      statusTextDiv.textContent =
         `Too far to pick up (need <= ${PICKUP_RADIUS} blocks)`;
       return;
     }
@@ -136,7 +156,7 @@ function spawnTokenAtCell(i: number, j: number) {
     if (playerHeldToken === null) {
       // pick up the token
       playerHeldToken = currentValue;
-      statusPanelDiv.innerHTML = `Holding: ${currentValue}`;
+      statusTextDiv.textContent = `Holding: ${currentValue}`;
       entry.marker.remove();
       tokenMap.delete(key);
     } else if (playerHeldToken === currentValue) {
@@ -148,10 +168,12 @@ function spawnTokenAtCell(i: number, j: number) {
         if (coinEl) coinEl.textContent = String(newValue);
       }
       tokenMap.set(key, { marker: entry.marker, value: newValue });
+      // If we reached the target value, show congratulations
+      congratulateIfReached(newValue);
       playerHeldToken = null;
-      statusPanelDiv.innerHTML = `Merged to ${newValue} — Holding: none`;
+      statusTextDiv.textContent = `Merged to ${newValue} — Holding: none`;
     } else {
-      statusPanelDiv.innerHTML =
+      statusTextDiv.textContent =
         `Already holding ${playerHeldToken}. Drop it first.`;
     }
   });
@@ -163,7 +185,7 @@ function attachDropHandler(i: number, j: number, rect: leaflet.Rectangle) {
     const withinRange = Math.abs(i) <= PICKUP_RADIUS &&
       Math.abs(j) <= PICKUP_RADIUS;
     if (!withinRange) {
-      statusPanelDiv.innerHTML =
+      statusTextDiv.textContent =
         `Too far to place (need <= ${PICKUP_RADIUS} blocks)`;
       return;
     }
@@ -180,35 +202,38 @@ function attachDropHandler(i: number, j: number, rect: leaflet.Rectangle) {
           if (coinEl) coinEl.textContent = String(newValue);
         }
         tokenMap.set(key, { marker: entry.marker, value: newValue });
+        // Congratulate if we produced the target value
+        congratulateIfReached(newValue);
         playerHeldToken = null;
-        statusPanelDiv.innerHTML = `Merged to ${newValue} — Holding: none`;
+        statusTextDiv.textContent = `Merged to ${newValue} — Holding: none`;
       } else {
-        statusPanelDiv.innerHTML = `Can't merge different token values`;
+        statusTextDiv.textContent = `Can't merge different token values`;
       }
       return;
     }
 
     // If tile already occupied and there's no merging, reject
     if (entry) {
-      statusPanelDiv.innerHTML = `Tile already has a token`;
+      statusTextDiv.textContent = `Tile already has a token`;
       return;
     }
 
     if (playerHeldToken === null) {
-      statusPanelDiv.innerHTML = `Not holding a token to place`;
+      statusTextDiv.textContent = `Not holding a token to place`;
       return;
     }
 
     const placedValue = playerHeldToken as number;
     const placedMarker = createCoinMarker(i, j, placedValue);
     tokenMap.set(key, { marker: placedMarker, value: placedValue });
+    // (Do not congratulate on simple placement — only on merges.)
 
     // wire pickup for placed marker (read current tokenMap value on click)
     placedMarker.on("click", () => {
       const withinRange = Math.abs(i) <= PICKUP_RADIUS &&
         Math.abs(j) <= PICKUP_RADIUS;
       if (!withinRange) {
-        statusPanelDiv.innerHTML =
+        statusTextDiv.textContent =
           `Too far to pick up (need <= ${PICKUP_RADIUS} blocks)`;
         return;
       }
@@ -218,7 +243,7 @@ function attachDropHandler(i: number, j: number, rect: leaflet.Rectangle) {
       if (playerHeldToken === null) {
         // pick up
         playerHeldToken = current;
-        statusPanelDiv.innerHTML = `Holding: ${current}`;
+        statusTextDiv.textContent = `Holding: ${current}`;
         placedMarker.remove();
         tokenMap.delete(key);
       } else if (playerHeldToken === current) {
@@ -230,16 +255,18 @@ function attachDropHandler(i: number, j: number, rect: leaflet.Rectangle) {
           if (coinEl) coinEl.textContent = String(newValue);
         }
         tokenMap.set(key, { marker: e.marker, value: newValue });
+        // If this merge hit the target, show congrats
+        congratulateIfReached(newValue);
         playerHeldToken = null;
-        statusPanelDiv.innerHTML = `Merged to ${newValue} — Holding: none`;
+        statusTextDiv.textContent = `Merged to ${newValue} — Holding: none`;
       } else {
-        statusPanelDiv.innerHTML =
+        statusTextDiv.textContent =
           `Already holding ${playerHeldToken}. Drop it first.`;
       }
     });
 
     playerHeldToken = null;
-    statusPanelDiv.innerHTML = `Placed: ${placedValue} — Holding: none`;
+    statusTextDiv.textContent = `Placed: ${placedValue} — Holding: none`;
   });
 }
 
