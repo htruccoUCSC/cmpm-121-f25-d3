@@ -17,7 +17,7 @@
 Key technical challenge: Can you assemble a map-based user interface using the Leaflet mapping framework?
 Key gameplay challenge: Can players collect and craft tokens from nearby locations to finally make one of sufficiently high value?
 
-### Steps
+### D3.a Steps
 
 - [x] copy main.ts to reference.ts for future reference
 - [x] delete everything in main.ts
@@ -30,3 +30,17 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] allow players to pick up tokens from cells
 - [x] allow players to craft a new token play placing their token in a cell with a token of equal value
 - [x] add notice for when player reaches a "sufficient" value
+
+## D3.b: Globe-spanning Gameplay (movement and generation)
+
+Key technical challenge: Can you generate cells around the players location and camera placement?
+Key gameplay challenge: Can players move around the cells and collect previously unreachable tokens?
+
+### D3.b Steps
+
+- [ ] Allign cells using an earth-spanning coordinate system
+- [ ] Generate a grid of cells only visible to the players camera
+- [ ] Add player movment buttons to the lower interface
+- [ ] Add the ability for the player to move from cell to cell by pressing one of the buttons
+- [ ] Dynamicaly update the players 3 cell interaction range when moving
+- [ ] Increase the sufficient value threshold to 128
