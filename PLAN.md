@@ -44,3 +44,14 @@ Key gameplay challenge: Can players move around the cells and collect previously
 - [x] Add the ability for the player to move from cell to cell by pressing one of the buttons
 - [x] Dynamicaly update the players 3 cell interaction range when moving
 - [x] Increase the sufficient value threshold to 128
+
+## D3.c: Object persistence
+
+Key technical challenge: Can you track the state of all changed cells in a memory efficient way?
+Key gameplay challenge: Can the game maintain the changes the player makes?
+
+### D3.c Steps
+
+- [ ] Remove the current visibilty tracking system
+- [ ] Create a map that tracks any updated cells
+- [ ] Update the screen redrawing logic to check the map for any changed cells
