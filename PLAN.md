@@ -55,3 +55,17 @@ Key gameplay challenge: Can the game maintain the changes the player makes?
 - [x] Remove the current visibilty tracking system
 - [x] Create a map that tracks any updated cells
 - [x] Update the screen redrawing logic to check the map for any changed cells
+
+## D3.d Gameplay Across Real-world Space and Time
+
+Key technical challenge: Can you enable the player to seamlessly switch between geolocation-based movement and button-based movement?
+Key gameplay challenge: Can players play the game using a geolocation-based movement system?
+
+## D3.d Steps
+
+- [ ] Update codebase to support multiple movement types
+- [ ] Use geolocation to determine the players starting position
+- [ ] Update players position to be snapped on to the grid cell closest to them
+- [ ] Add geolocation / button movement toggle switch
+- [ ] Add a new game button
+- [ ] Add the ability to save the current session to local storage
