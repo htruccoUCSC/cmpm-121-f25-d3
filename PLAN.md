@@ -68,4 +68,4 @@ Key gameplay challenge: Can players play the game using a geolocation-based move
 - [x] Update players position to be snapped on to the grid cell closest to them
 - [x] Add geolocation / button movement toggle switch
 - [x] Add the ability to save the current session to local storage
-- [ ] Add a new game button
+- [x] Add a new game button

@@ -854,3 +854,64 @@ declare global {
 map.on("moveend", () => {
   renderVisibleCells();
 });
+
+// New Game: reset state, clear storage and map, then attempt geolocation startup
+function resetGame() {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch (_e) {
+    console.debug("Unable to remove session key from localStorage");
+  }
+
+  // Remove any token markers from the map
+  tokenMap.forEach((entry) => {
+    try {
+      entry.marker.remove();
+    } catch (_e) {
+      console.debug("failed to remove token marker");
+    }
+  });
+  tokenMap.clear();
+
+  // Clear view and changed state
+  try {
+    viewLayer.clearLayers();
+  } catch (_e) {
+    console.debug("viewLayer.clearLayers failed");
+  }
+  changedCells.clear();
+
+  // Reset held token and status
+  playerHeldToken = null;
+  statusTextDiv.textContent = "Holding: none";
+
+  // Remove player marker from map (if present) and stop geolocation
+  try {
+    playerMarker.remove();
+  } catch (_e) {
+    console.debug("playerMarker.remove failed");
+  }
+  stopGeolocationWatch();
+
+  // Reset playerCell to classroom origin
+  const originCell = latLngToCell(origin.lat, origin.lng);
+  playerCell.i = originCell.i;
+  playerCell.j = originCell.j;
+
+  // Attempt to place player via normal startup geolocation flow
+  tryUseGeolocationAtStartup();
+}
+
+// Add a New Game button at the bottom of the page
+const newGameDiv = document.createElement("div");
+newGameDiv.className = "new-game";
+const newGameBtn = document.createElement("button");
+newGameBtn.id = "newGameBtn";
+newGameBtn.className = "control-btn";
+newGameBtn.textContent = "New Game";
+newGameDiv.append(newGameBtn);
+document.body.append(newGameDiv);
+newGameBtn.addEventListener("click", () => {
+  resetGame();
+  showTransientStatus("New game started", 2000);
+});
